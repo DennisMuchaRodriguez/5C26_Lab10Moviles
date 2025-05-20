@@ -1175,6 +1175,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultEntries: 5
   uiRankingManager: {fileID: 986787381}
+  currentPlayerData: {fileID: 0}
 --- !u!4 &1219927046
 Transform:
   m_ObjectHideFlags: 0

@@ -14,7 +14,7 @@ public class ScoreManager : MonoBehaviour
 
     private void LoadInitialHighScore()
     {
-        databaseHandler.GetUserHighScore(scoreData.username, (highScore) => {
+        databaseHandler.GetUserHighScore(scoreData.email, (highScore) => {
             scoreData.highScore = highScore;
             gameUI.UpdateHighScoreDisplay(scoreData.highScore);
         });

@@ -6,38 +6,36 @@ using Firebase;
 using System.Threading.Tasks;
 using UnityEngine.Events;
 using System.Security.Cryptography;
+using TMPro;
 
 public class Authentification : MonoBehaviour
 {
-    [SerializeField] private string email;
-    [SerializeField] private string password;
-
-    [Header("Bool Actions")]
-    [SerializeField] private bool signUp = false;
-    [SerializeField] private bool signIn = false;
-
+    [Header("Log In Text References")]
+    [SerializeField] private TMP_InputField li_email;
+    [SerializeField] private TMP_InputField li_password;
+    [Header("Sign Up Text References")]
+    [SerializeField] private TMP_InputField su_email;
+    [SerializeField] private TMP_InputField su_password;
+    [Header("Player Data")]
+    [SerializeField] private ScoreDataSO currentPlayerData;
     private FirebaseAuth _authReference;
 
     public UnityEvent OnLogInSuccesful = new UnityEvent();
+    public UnityEvent OnSignUpSuccesful = new UnityEvent();
+
+    private void OnEnable()
+    {
+        OnLogInSuccesful.AddListener(LoadMainMenu);
+    }
+
+    private void LoadMainMenu()
+    {
+        GlobalSceneManager.Instance.LoadNormal("MainMenu");
+    }
 
     private void Awake()
     {
         _authReference = FirebaseAuth.GetAuth(FirebaseApp.DefaultInstance);
-    }
-
-    private void Start()
-    {
-        if (signUp)
-        {
-            Debug.Log("Start Register");
-            StartCoroutine(RegisterUser(email, password));
-        }
-
-        if (signIn)
-        {
-            Debug.Log("Start Login");
-            StartCoroutine(SignInWithEmail(email, password));
-        }
     }
 
     private void Update()
@@ -49,12 +47,13 @@ public class Authentification : MonoBehaviour
     }
     public void LogIn()
     {
-        StartCoroutine(SignInWithEmail(email, password));
+        StartCoroutine(SignInWithEmail(li_email.text, li_password.text));
     }
-    public void SingUp()
+    public void SignUp()
     {
-        StartCoroutine(RegisterUser(email, password));
+        StartCoroutine(RegisterUser(su_email.text, su_password.text));
     }
+    /*
     public void RecoverPassword()
     {
         StartCoroutine(RecoverPassword(email));
@@ -65,6 +64,7 @@ public class Authentification : MonoBehaviour
         var registerTask = _authReference.SendPasswordResetEmailAsync(email);
         yield return new WaitUntil(() => registerTask.IsCompleted);
     }
+    */
 
     private IEnumerator RegisterUser(string email, string password)
     {
@@ -79,6 +79,7 @@ public class Authentification : MonoBehaviour
         else
         {
             Debug.Log($"Succesfully registered user {registerTask.Result.User.Email}");
+            OnSignUpSuccesful?.Invoke();
         }
     }
 
@@ -96,6 +97,7 @@ public class Authentification : MonoBehaviour
         else
         {
             Debug.Log($"Login succeeded with {loginTask.Result.User.Email}");
+            currentPlayerData.UpdateFromAuth(loginTask.Result.User);
             OnLogInSuccesful?.Invoke();
         }
     }
@@ -103,5 +105,6 @@ public class Authentification : MonoBehaviour
     public void LogOut()
     {
         FirebaseAuth.DefaultInstance.SignOut();
+        GlobalSceneManager.Instance.LoadNormal("Auth");
     }
 }

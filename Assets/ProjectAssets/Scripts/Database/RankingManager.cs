@@ -1,63 +1,123 @@
-using Firebase.Database;
+using Firebase.Firestore;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 
 public class RankingManager : MonoBehaviour
 {
     [Header("Config")]
-    [SerializeField] private int defaultEntries = 5;
-    [SerializeField] private UIRankingManager uiRankingManager;
+    [SerializeField] private int maxEntries = 10;
+    [SerializeField] private ScoreDataSO currentPlayerData;
+    [SerializeField] private UIRankingManager uiManager;
 
-    private DatabaseReference _scoresReference;
+    private FirebaseFirestore db;
+    private CollectionReference scoresRef;
 
     void Start()
     {
-        _scoresReference = FirebaseDatabase.DefaultInstance.GetReference("scores");
-        LoadTopScores(defaultEntries);
+        InitializeFirestore();
+        LoadTopScores();
     }
 
-    public void LoadTopScores(int numberOfEntries)
+    private void InitializeFirestore()
     {
-        StartCoroutine(LoadTopScoresCoroutine(numberOfEntries));
+        db = FirebaseFirestore.DefaultInstance;
+        scoresRef = db.Collection("scores");
     }
 
-    private IEnumerator LoadTopScoresCoroutine(int maxEntries)
+    public void SubmitCurrentScore()
     {
-        var query = _scoresReference
-            .OrderByChild("score")
-            .LimitToLast(maxEntries);
+        if (currentPlayerData.currentScore > 0)
+        {
+            StartCoroutine(SubmitScoreCoroutine());
+        }
+    }
 
-        var task = query.GetValueAsync();
+    private IEnumerator SubmitScoreCoroutine()
+    {
+        var scoreData = currentPlayerData.ToScoreData();
 
+        var task = scoresRef.AddAsync(scoreData);
         yield return new WaitUntil(() => task.IsCompleted);
 
-        if (task != null && task.IsCompleted && !task.IsFaulted)
-            ProcessSnapshot(task.Result);
+        if (task.IsCompleted && !task.IsFaulted)
+        {
+            Debug.Log("Score submitted successfully!");
+
+     
+            if (currentPlayerData.currentScore > currentPlayerData.highScore)
+            {
+                currentPlayerData.highScore = currentPlayerData.currentScore;
+            }
+
+            LoadTopScores(); 
+        }
         else
-            Debug.LogError("Error loading scores");
+        {
+            Debug.LogError("Failed to submit score: " + task.Exception);
+        }
     }
 
-    private void ProcessSnapshot(DataSnapshot snapshot)
+    public void LoadTopScores()
+    {
+        StartCoroutine(LoadTopScoresCoroutine());
+    }
+
+    private IEnumerator LoadTopScoresCoroutine()
+    {
+        var query = scoresRef
+            .OrderByDescending("score")
+            .Limit(maxEntries);
+
+        var task = query.GetSnapshotAsync();
+        yield return new WaitUntil(() => task.IsCompleted);
+
+        if (task.IsCompleted && !task.IsFaulted)
+        {
+            ProcessSnapshot(task.Result);
+        }
+        else
+        {
+            Debug.LogError("Error loading scores: " + task.Exception);
+        }
+    }
+
+    private void ProcessSnapshot(QuerySnapshot snapshot)
     {
         List<ScoreData> scores = new List<ScoreData>();
 
-        foreach (DataSnapshot child in snapshot.Children)
+        foreach (var document in snapshot.Documents)
         {
-            try
-            {
-                ScoreData entry = JsonUtility.FromJson<ScoreData>(child.GetRawJsonValue());
-                scores.Add(entry);
-            }
-            catch (System.ArgumentException e)
-            {
-                Debug.LogError($"Error parsing JSON: {child.Key} - {e.Message}");
-            }
+            var scoreData = document.ConvertTo<ScoreData>();
+            scores.Add(scoreData);
         }
 
-        scores.Sort((a, b) => b.score.CompareTo(a.score));
+        uiManager.UpdateRankingUI(scores);
+    }
 
-        uiRankingManager.UpdateRankingUI(scores);
+    public void LoadPlayerScores()
+    {
+        StartCoroutine(LoadPlayerScoresCoroutine());
+    }
+
+    private IEnumerator LoadPlayerScoresCoroutine()
+    {
+        var query = scoresRef
+            .WhereEqualTo("userId", currentPlayerData.userId)
+            .OrderByDescending("score")
+            .Limit(5);
+
+        var task = query.GetSnapshotAsync();
+        yield return new WaitUntil(() => task.IsCompleted);
+
+        if (task.IsCompleted && !task.IsFaulted)
+        {
+            List<ScoreData> playerScores = new List<ScoreData>();
+
+            foreach (var document in task.Result.Documents)
+            {
+                playerScores.Add(document.ConvertTo<ScoreData>());
+            }
+        }
     }
 }

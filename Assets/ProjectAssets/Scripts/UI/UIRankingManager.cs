@@ -11,7 +11,7 @@ public class UIRankingManager : MonoBehaviour
         {
             if (i < scores.Count)
             {
-                _rankingEntries[i].SetData(scores[i].username, scores[i].score);
+                _rankingEntries[i].SetData(scores[i].email, scores[i].score);
             }
             else
             {
@@ -19,7 +19,6 @@ public class UIRankingManager : MonoBehaviour
             }
         }
     }
-
     public void LoadScene(string name)
     {
         GlobalSceneManager.Instance.LoadNormal(name);

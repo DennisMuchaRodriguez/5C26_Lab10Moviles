@@ -26,7 +26,7 @@ public class GameOverDataHandler : MonoBehaviour
             newHighscore = true;
         }
 
-        databaseHandler.GetUserHighScore(scoreData.username, (highScore) => {
+        databaseHandler.GetUserHighScore(scoreData.email, (highScore) => {
             scoreData.highScore = Mathf.Max(highScore, scoreData.highScore);
         });
     }
