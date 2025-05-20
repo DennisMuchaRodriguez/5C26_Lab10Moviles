@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "604573756550",
+    "firebase_url": "https://c26-moviles-lab09-default-rtdb.firebaseio.com",
+    "project_id": "c26-moviles-lab09",
+    "storage_bucket": "c26-moviles-lab09.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:604573756550:android:5f3720a77d2335307f3507",
+        "android_client_info": {
+          "package_name": "com.MuchaVillanueva.Moviles_LAB09"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVfZ7Jg9BSGLzN294jPveKItKDOlqXxJg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
